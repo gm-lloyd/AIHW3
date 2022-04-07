@@ -1,8 +1,10 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
 
-
+/// <summary>
+/// program to perform minimax algorithm on three men's morris game
+/// author: Gavin Lloyd
+/// </summary>
 namespace ThreeMensMorris
 {
 	class Program
@@ -32,14 +34,25 @@ namespace ThreeMensMorris
 			{
 				tree = new(false);
 				Console.WriteLine("invalid input");
+				return;
 			}
-			
+			//set breakpoint here to explore the tree in debugger if you want
+			tree = tree;
 			var timeTaken = after - before;
 
-			Traverse(tree, input == "x");
 			Console.WriteLine(timeTaken.ToString());
+			Traverse(tree, input == "x");
+			
 		}
 
+		/// <summary>
+		/// Allows the user to look at the moves that the ai explored.
+		/// AI Move is printed and then user can pick between the nodes the ai explored
+		/// some moves are not available because they were pruned, 
+		/// ideal ai would not have picked the node if it doesn't have all available moves
+		/// </summary>
+		/// <param name="root">root of the tree to traverse</param>
+		/// <param name="MaxIsCPU">determines whether max or min is cpu</param>
 		public static void Traverse(Node root, bool MaxIsCPU)
 		{
 			Console.WriteLine(" final value is " + root.NodeValue);
@@ -98,6 +111,10 @@ namespace ThreeMensMorris
 			}
 		}
 
+		/// <summary>
+		/// prints the state of the board to the console
+		/// </summary>
+		/// <param name="board">state of board</param>
 		public static void PrintBoard(List<string> board)
 		{
 			Console.Write("---\n|" + board[0] + board[1] + board[2] + "|\n|"
@@ -105,34 +122,37 @@ namespace ThreeMensMorris
 						+ board[6] + board[7] + board[8] + "|\n---\n");
 		}
 
+		/// <summary>
+		/// Recursive method to perform alpha beta pruning
+		/// Max and min nodes take turns to select a move that will result in the highest or lowest score respectively
+		/// does not continue if nodes searched do not lead to a better move for Max or Min
+		/// </summary>
+		/// <param name="node"> The current node to explore </param>
+		/// <param name="alpha"> the highest value node that Max can guarantee</param>
+		/// <param name="beta"> the lowest value node that Min can guarantee</param>
+		/// <param name="MaxTurn"> bool to control which turn it is</param>
+		/// <returns></returns>
 		public static Node AlphaBetaPruning(Node node,int alpha, int beta, bool MaxTurn)
 		{
 			if (node.CheckWins() || node.depth >= 16)
-
 				return node;
 			else
 			{
-
-				if(node.depth == 6)
-				{
-					//check
-					node.depth = 2 + 2 + 2;
-				}
-
 				if (MaxTurn)
 				{
+					// list of all possible moves, not everyone is guaranteed to be explored
 					List<Node> childNodes = node.GetAllChildren(MaxTurn);
 					node.NodeValue = int.MinValue;
 					foreach (Node n in childNodes)
 					{
 						Node child = AlphaBetaPruning(n, alpha, beta, !MaxTurn);
+						//if explored, add to the tree
 						node.childrenNodes.Add(child);
 						child.parentNode = node;
-
+						//set max value
 						node.NodeValue = Math.Max(node.NodeValue, child.NodeValue);
-
+						//set alpha
 						alpha = Math.Max(alpha, node.NodeValue);
-
 						if (alpha >= beta)
 						{
 							break;
@@ -142,7 +162,7 @@ namespace ThreeMensMorris
 					}
 
 				}
-				else //MinTurn 
+				else //MinTurn, same process but reversed for Min 
 				{
 					List<Node> childNodes = node.GetAllChildren(MaxTurn);
 					node.NodeValue = int.MaxValue;
@@ -165,15 +185,16 @@ namespace ThreeMensMorris
 				}
 			}
 
-
+			//return the node if it isn't a leaf to have intermediates
 			return node;
 		}
 	}
 
+	/// <summary>
+	/// Node class for representing the search tree
+	/// </summary>
 	class Node
 	{
-		//value of node
-		public int NodeValue = 0;
 		/// <summary>
 		/// List of 9 holding game state, -1 is white, 1 is black 0 is empty
 		/// 012
@@ -182,13 +203,16 @@ namespace ThreeMensMorris
 		/// the index holds the 
 		/// </summary>
 		public List<string> state;
+		//value of node
+		public int NodeValue = 0;
+		//reference to rest of child nodes
 		public List<Node> childrenNodes;
+		//keep track of parent nodes
 		public Node parentNode;
+		//depth needed for ply
 		public int depth = 0;
-		public int alpha;
-		public int beta;
+		// used for calcs for Max or Min
 		public bool MaxTurn;
-		string rep = "";
 
 		public Node(bool MaxFirst, Node parent = null)
 		{
@@ -199,26 +223,20 @@ namespace ThreeMensMorris
 		}
 
 
-		public Node(List<string> currentState, bool MaxTurn, Node parent, int depth, int alpha, int beta)
+		public Node(List<string> currentState, bool MaxTurn, Node parent, int depth)
 		{
 			state = currentState;
 			this.MaxTurn = MaxTurn;
 			parentNode = parent;
 			this.depth = depth;
-			this.alpha = alpha;
-			this.beta = beta;
 			childrenNodes = new();
-
-			rep = state[0] + state[1] + state[2] + "\n"
-						+ state[3] + state[4] + state[5] + "\n"
-						+ state[6] + state[7] + state[8];
 		}
 
 		/// <summary>
 		/// goes through the board state and checks each possible winning path for a win, if a win is found, returns true.
 		/// If no wins are found, the difference in potential winning paths for black and white are computed and set and returns false
 		/// </summary>
-		/// <returns></returns>
+		/// <returns>whether the board contains a win</returns>
 		public bool CheckWins()
 		{
 			//top row
@@ -269,8 +287,8 @@ namespace ThreeMensMorris
 		/// Given a string of three spaces on the board in a line, checks if it is a win and returns 8 or -8
 		/// If no win is found, but it is a winning path for 
 		/// </summary>
-		/// <param name="line"></param>
-		/// <returns></returns>
+		/// <param name="line">string of three consecutive spaces on the board</param>
+		/// <returns>the line is a win or not</returns>
 		private bool CheckLine(string line)
 		{
 			if (line == "www")
@@ -297,6 +315,11 @@ namespace ThreeMensMorris
 			else return false;
 		}
 
+		/// <summary>
+		/// finds all possible moves for the current board and returns a list of nodes with those moves
+		/// </summary>
+		/// <param name="whiteMove">if it is white (Max) to move</param>
+		/// <returns></returns>
 		public List<Node> GetAllChildren(bool whiteMove)
 		{
 			List<Node> possibleMoves = new();
@@ -314,7 +337,7 @@ namespace ThreeMensMorris
 						List<string> newState = new(state);
 						newState[i] = piece;
 						//add this move to the possible moves
-						possibleMoves.Add(new Node(newState, !whiteMove, this, depth + 1, alpha, beta));
+						possibleMoves.Add(new Node(newState, !whiteMove, this, depth + 1));
 					}
 					i++;
 				}
@@ -328,7 +351,7 @@ namespace ThreeMensMorris
 					{
 						List<int> possibleIndex = getPossibleMovesFor(state, i);
 						//for each adjacent empty space, add node with that move to the possible moves
-						foreach (int n in possibleIndex) { possibleMoves.Add(new Node(swap(state, i, n), !whiteMove, this, depth + 1, alpha, beta)); }
+						foreach (int n in possibleIndex) { possibleMoves.Add(new Node(swap(state, i, n), !whiteMove, this, depth + 1)); }
 					}
 					i++;
 				}
@@ -409,6 +432,13 @@ namespace ThreeMensMorris
 			return possibleIndex;
 		}
 
+		/// <summary>
+		/// swaps the two indices given and returns a new board state 
+		/// </summary>
+		/// <param name="oldState">state to swap from</param>
+		/// <param name="blankIndex">one index to swap</param>
+		/// <param name="pieceIndex">other index to swap</param>
+		/// <returns>state with swap</returns>
 		private static List<string> swap(List<string> oldState, int blankIndex, int pieceIndex)
 		{
 			List<string> newState = new(oldState);
