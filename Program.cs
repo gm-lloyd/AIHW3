@@ -4,6 +4,25 @@ using System.Collections.Generic;
 /// <summary>
 /// program to perform minimax algorithm on three men's morris game
 /// author: Gavin Lloyd
+/// 
+/// Whoever starts will win
+/// 
+/// Avg time for Max first -> 8.7 secs
+/// Avg time for Min first -> 8.4 secs
+/// 
+/// problem is represented by an array of size 9
+/// this is translated to a 3x3 board by using the following indices in these positions
+/// 012
+/// 345
+/// 678
+/// so the array 
+/// ["w"," "," ","b","w"," "," "," ","b"]
+/// represents the board
+/// _____
+/// |w  |
+/// |bw |
+/// |  b|
+/// -----
 /// </summary>
 namespace ThreeMensMorris
 {
@@ -107,8 +126,9 @@ namespace ThreeMensMorris
 							root = CPUMove;
 					}
 				}
-
 			}
+			Console.WriteLine("CPU's Move:");
+			PrintBoard(root.state);
 		}
 
 		/// <summary>
